@@ -31,7 +31,7 @@ jobs:
       - name: Extract Android ZIP
         run: |
           mkdir project
-          unzip -q SmartMitra-AI-GitHub-Ready.zip -d project
+          unzip -o SmartMitraAI-GitHub-Ready.zip -d project
           SETTINGS=$(find project -name settings.gradle.kts -print -quit)
           test -n "$SETTINGS"
           PROJECT_DIR=$(dirname "$SETTINGS")
