@@ -1,24 +1,49 @@
+name: Build SmartMitra AI APK
 
-      - name: Extract Android project ZIP
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.10.2"
+
+      - name: Extract Android ZIP
         run: |
-          echo "Checking repository files..."
-          pwd
-          ls -lah
-          find . -maxdepth 3 -type f -iname "*.zip" -print
+          mkdir project
+          unzip -q SmartMitra-AI-GitHub-Ready.zip -d project
+          SETTINGS=$(find project -name settings.gradle.kts -print -quit)
+          test -n "$SETTINGS"
+          PROJECT_DIR=$(dirname "$SETTINGS")
+          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
 
-          ZIP_FILE=$(find . -maxdepth 3 -type f -iname "SmartMitraAI-GitHub-Ready.zip" -print -quit)
+      - name: Build Debug APK
+        run: gradle --no-daemon assembleDebug
+        working-directory: ${{ env.PROJECT_DIR }} 
 
-          if [ -z "$ZIP_FILE" ]; then
-            ZIP_FILE=$(find . -maxdepth 3 -type f -iname "*GitHub-Ready*.zip" -print -quit)
-          fi
-
-          if [ -z "$ZIP_FILE" ]; then
-            echo "ERROR: Android project ZIP not found"
-            exit 1
-          fi
-
-          mkdir -p project
-          unzip -q "$ZIP_FILE" -d project
-
-          test -f project/settings.gradle.kts
-          test -f project/app/build.gradle.kts
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmartMitra-AI-APK
+          path: project/**/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
