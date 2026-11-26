@@ -1,0 +1,110 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1020">
+<title>SmartMitra AI</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b1020;color:#f4f7ff;font:16px system-ui;padding:20px}
+header{padding:15px 0;border-bottom:1px solid #34415e}
+h1{font-size:23px;margin:0}
+p{color:#a8b4ca;line-height:1.5}
+main{max-width:650px;margin:auto}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:22px 0}
+button{cursor:pointer;border:1px solid #354463;border-radius:13px;padding:14px;background:#192640;color:white;font-size:15px}
+button.active,.send{background:#765fff;border:0}
+textarea{width:100%;height:130px;padding:14px;background:#141d32;color:white;border:1px solid #40527a;border-radius:12px;font:16px system-ui}
+#result{white-space:pre-wrap;background:#141d32;padding:15px;border-radius:12px;min-height:60px;margin-top:15px}
+small{color:#a8b4ca}
+</style>
+</head>
+<body>
+<main>
+<header>
+<h1>✨ SmartMitra AI</h1>
+<p>Your Everyday Smart Companion</p>
+</header>
+
+<h3>Choose Your AI Tool</h3>
+<div class="grid">
+<button onclick="choose('chat',this)" class="active">💬 AI Chat</button>
+<button onclick="choose('translate',this)">🌐 Translator</button>
+<button onclick="choose('writer',this)">✍️ AI Writer</button>
+<button onclick="choose('study',this)">📚 Study Helper</button>
+<button onclick="choose('job',this)">💼 Job Assistant</button>
+<button onclick="choose('pdf',this)">📄 PDF Explainer</button>
+</div>
+
+<textarea id="prompt" placeholder="Ask SmartMitra AI anything..."></textarea>
+<br><br>
+<button class="send" onclick="askAI()">Send to Gemini 🚀</button>
+<div id="result">Your AI response will appear here.</div>
+<small>Hindi · English · Kannada</small>
+</main>
+
+<script>
+const BACKEND =
+"https://mitra-ai-backend.ayanstylo786.workers.dev";
+
+let currentTool="chat";
+
+function choose(tool,button){
+ currentTool=tool;
+ document.querySelectorAll(".grid button")
+ .forEach(b=>b.classList.remove("active"));
+ button.classList.add("active");
+ document.getElementById("result").textContent=
+ "Selected: "+tool;
+}
+
+async function askAI(){
+ const prompt=document.getElementById("prompt").value.trim();
+ const result=document.getElementById("result");
+
+ if(!prompt){
+ result.textContent="Please enter your message.";
+ return;
+ }
+
+ result.textContent="SmartMitra AI is thinking...";
+
+ try{
+ const response=await fetch(BACKEND,{
+ method:"POST",
+ headers:{"Content-Type":"application/json"},
+ body:JSON.stringify({
+ message:prompt,
+ prompt:prompt,
+ tool:currentTool,
+ language:"auto"
+ })
+ });
+
+ const data=await response.json();
+
+ if(!response.ok){
+ throw new Error(data.error||"Backend error: "+response.status);
+ }
+
+ const answer=
+ data.response||data.reply||data.answer||
+ data.text||data.result;
+
+ if(!answer){
+ throw new Error("Unexpected backend response format.");
+ }
+
+ result.textContent=answer;
+
+ }catch(error){
+ result.textContent=
+ "Connection error: "+error.message+
+ "\nPlease check the backend API endpoint and request format.";
+ }
+}
+</script>
+</body>
+</html>
